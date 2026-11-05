@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶可夢節奏遊戲 - 譜面編輯器</title>
+  <link rel="stylesheet" href="/css/style.css?v=4">
+  <link rel="stylesheet" href="/css/workbench.css?v=4">
+  <style>
+    /* MIDI Import dialog styling */
+    .midi-import-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .midi-import-box {
+      width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: var(--bg-darker);
+      border: 4px solid var(--primary-color);
+      padding: 25px;
+      box-shadow: 0 0 30px rgba(102,252,241,0.3);
+    }
+    .midi-track-item {
+      padding: 10px;
+      border: 2px solid #333;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .midi-track-item.selected {
+      border-color: var(--color-left);
+      background: rgba(46,204,113,0.1);
+    }
+    .midi-track-item:hover {
+      border-color: #888;
+    }
+    .dir-assign-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .dir-label { font-size: 11px; padding: 4px; border: 1px solid #444; }
+    .dir-select {
+      background: #000; color: #fff; border: 1px solid #555;
+      padding: 3px; font-size: 11px; width: 100%;
+    }
+    .pitch-badge {
+      display: inline-block;
+      padding: 2px 5px;
+      background: #1a2a1a;
+      border: 1px solid var(--color-left);
+      font-family: monospace;
+      font-size: 10px;
+      color: var(--color-left);
+      border-radius: 3px;
+      margin: 2px;
+    }
+  </style>
+</head>
+<body class="editor-workbench">
+
+  <div class="editor-layout">
+    
+    <!-- Top Header -->
+    <div class="pixel-box pixel-box-primary d-flex justify-between align-center" style="padding: 15px; margin: 0;">
+      <h2 class="retro-text text-cyan" style="font-size: 16px;">簡易譜面編輯器</h2>
+      <div class="d-flex gap-10 align-center">
+        <!-- MIDI Import Button -->
+        <button id="btn-open-midi-import" class="pixel-btn" style="background: #9B59B6; color: #fff; font-size: 10px; padding: 6px 14px;">
+          🎵 匯入 MusicXML／MIDI
+        </button>
+        <a href="/manage.html" class="pixel-btn" style="font-size: 10px; text-decoration: none; padding: 6px 12px; background: #2f6f78; color: #fff;">內容管理</a>
+        <a href="/admin.html" class="pixel-btn" style="font-size: 10px; text-decoration: none; padding: 6px 12px; background: #666; color: #fff;">主持控制</a>
+      </div>
+    </div>
+
+    <!-- Middle Workspace -->
+    <div class="editor-workspace">
+      
+      <!-- Panel 1: Playlist / Question Bank -->
+      <div class="pixel-box d-flex flex-column gap-10" style="overflow-y: hidden; font-size: 13px;">
+        <h3 class="retro-text text-cyan" style="font-size: 12px; border-bottom: 2px solid; padding-bottom: 5px;">題庫清單</h3>
+        <div class="playlist-panel" id="playlist-container" style="flex-grow: 1;">
+          <!-- Playlist items injected via JS -->
+        </div>
+        <div class="d-flex gap-10" style="margin-top: 10px;">
+          <button id="btn-add-song" class="pixel-btn" style="flex: 1; padding: 8px; font-size: 10px; background: var(--color-left);">＋新增題目</button>
+        </div>
+      </div>
+
+      <!-- Panel 2: Song details form -->
+      <div class="pixel-box d-flex flex-column gap-10" style="overflow-y: auto; font-size: 13px;">
+        <h3 class="retro-text text-gold" style="font-size: 12px; border-bottom: 2px solid; padding-bottom: 5px;">當前題目設定</h3>
+        
+        <div class="gap-10 d-flex flex-column">
+          <label>歌曲名稱</label>
+          <input type="text" id="ed-song-name" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff;" value="新歌旋律">
+        </div>
+
+        <div class="gap-10 d-flex flex-column">
+          <label>寶可夢名稱</label>
+          <input type="text" id="ed-pkmn-name" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff;" value="皮卡丘">
+        </div>
+
+        <div class="gap-10 d-flex flex-column">
+          <label>寶可夢點數分類</label>
+          <select id="ed-pkmn-evo" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+            <option value="three-stage-1">三階進化 - 一階</option>
+            <option value="three-stage-2">三階進化 - 二階</option>
+            <option value="three-stage-3">三階進化 - 三階</option>
+            <option value="two-stage-1">二階進化 - 一階</option>
+            <option value="two-stage-2">二階進化 - 二階</option>
+            <option value="no-evolution">無進化</option>
+            <option value="legendary">神獸／傳說</option>
+            <option value="custom">自訂分數（手動輸入）</option>
+          </select>
+        </div>
+
+        <div id="ed-pkmn-custom-points-wrap" class="gap-10 d-flex flex-column" style="display:none;">
+          <label>本題寶可夢自訂分數</label>
+          <input type="number" id="ed-pkmn-custom-points" min="0" step="1" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff;" value="0">
+        </div>
+
+        <div class="gap-10 d-flex flex-column">
+          <label>寶可夢素材圖</label>
+          <select id="ed-pkmn-image" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+            <option value="">尚未指定（捕捉時才顯示）</option>
+          </select>
+        </div>
+
+        <div class="gap-10 d-flex flex-column" style="border-top:1px solid #444; padding-top:10px;">
+          <label>題目素材中的參考音檔</label>
+          <select id="ed-reference-audio" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+            <option value="">未指定參考音檔</option>
+          </select>
+          <label style="font-size:10px; color:#aaa;">音檔起始偏移（ms）</label>
+          <input type="number" id="ed-audio-offset" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff;" value="0" step="10">
+          <audio id="ed-reference-player" controls preload="metadata" style="width:100%; display:none;"></audio>
+          <label style="display:flex; gap:8px; align-items:center; font-size:11px; color:#aaa;">
+            <input type="checkbox" id="ed-sync-reference" checked>
+            播放譜面時同步播放參考音檔
+          </label>
+        </div>
+
+        <div class="gap-10 d-flex flex-column">
+          <label>題目素材中的 MusicXML（推薦）</label>
+          <select id="ed-score-asset" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+            <option value="">未指定 MusicXML 素材</option>
+          </select>
+          <button id="btn-load-score-asset" class="pixel-btn" style="padding:6px; font-size:9px; background:#3A7CA5; color:#fff;">載入選定 MusicXML 到匯入視窗</button>
+        </div>
+
+        <div class="gap-10 d-flex flex-column">
+          <label>題目素材中的 MIDI</label>
+          <select id="ed-midi-asset" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+            <option value="">未指定 MIDI 素材</option>
+          </select>
+          <button id="btn-load-midi-asset" class="pixel-btn" style="padding:6px; font-size:9px; background:#9B59B6; color:#fff;">載入選定 MIDI 到匯入視窗</button>
+        </div>
+
+        <div class="gap-10 d-flex flex-column" style="border-top: 1px solid #444; padding-top: 10px; margin-top: 5px;">
+          <label class="retro-text text-cyan" style="font-size: 10px;">手動放置音符設定</label>
+          
+          <div style="display: flex; gap: 5px;">
+            <div style="flex: 1;">
+              <label style="font-size: 10px; color: #aaa;">音高</label>
+              <select id="ed-note-pitch" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;"><option value="C4">C4</option></select>
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 10px; color: #aaa;">預設長度 (長音)</label>
+              <select id="ed-note-duration" class="pixel-box" style="padding:6px; margin:0; background:#000; color:#fff; width: 100%;">
+                <option value="0">短音符</option>
+                <option value="500">0.5秒</option>
+                <option value="1000">1秒</option>
+                <option value="2000">2秒</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="gap-10 d-flex flex-column" style="margin-top: 15px; border-top:1px solid #34444d; padding-top:12px;">
+          <label class="retro-text text-cyan" style="font-size:10px;">譜面編輯模式</label>
+          <div class="d-flex gap-10">
+            <button id="btn-select-mode" type="button" class="pixel-btn editor-mode-active" style="flex:1;padding:7px;font-size:9px;">選取／調整</button>
+            <button id="btn-add-mode" type="button" class="pixel-btn" style="flex:1;padding:7px;font-size:9px;">＋ 新增音符</button>
+          </div>
+          <div class="d-flex gap-10">
+            <button id="btn-undo" type="button" class="pixel-btn" style="flex:1;padding:7px;font-size:9px;">↶ 復原</button>
+            <button id="btn-redo" type="button" class="pixel-btn" style="flex:1;padding:7px;font-size:9px;">↷ 重做</button>
+            <button id="btn-delete-selected" type="button" class="pixel-btn pixel-btn-danger" style="flex:1;padding:7px;font-size:9px;">刪除選取</button>
+          </div>
+          <p style="font-size:10px;color:#82959e;line-height:1.55;margin:0;">預設為選取模式。拖曳音符可左右調整時間、上下改變箭頭列；按住 Shift 再拖曳，會讓「此音起的所有後續音符」一起前後移。只有切換到「新增音符」後，點時間軸空白處才會新增。</p>
+          <button id="btn-clear-all" class="pixel-btn pixel-btn-danger" style="padding: 8px; font-size: 10px;">清空目前曲目全部音符</button>
+        </div>
+
+        <!-- MIDI Info Box -->
+        <div id="midi-info-box" style="display:none; background:#0a1a0a; border: 2px solid var(--color-left); padding: 10px; margin-top: 10px; font-size: 11px;">
+          <div class="retro-text text-cyan" style="font-size: 9px; margin-bottom: 6px;">已匯入譜面資訊</div>
+          <div id="midi-info-content" style="color: #aaa; line-height: 1.7;"></div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Scrolling timeline -->
+      <div class="timeline-container" id="timeline-container">
+        <div class="timeline-ruler" id="timeline-ruler"></div>
+        <div class="timeline-tracks" id="timeline-tracks">
+          <div class="playhead" id="playhead" style="left: 0px;"></div>
+          <div class="timeline-track-row" data-direction="left">
+            <span class="timeline-track-label text-cyan">◀ 左 (LEFT)</span>
+          </div>
+          <div class="timeline-track-row" data-direction="down">
+            <span class="timeline-track-label text-cyan">▼ 下 (DOWN)</span>
+          </div>
+          <div class="timeline-track-row" data-direction="up">
+            <span class="timeline-track-label text-cyan">▲ 上 (UP)</span>
+          </div>
+          <div class="timeline-track-row" data-direction="right">
+            <span class="timeline-track-label text-cyan">▶ 右 (RIGHT)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: Playback Controls & Action -->
+    <div class="pixel-box d-flex justify-between align-center" style="padding: 15px; margin: 0; gap: 20px;">
+      <div class="d-flex gap-10 align-center">
+        <button id="btn-play-pause" class="pixel-btn" style="background: var(--color-left);">播放 / 暫停</button>
+        <button id="btn-stop" class="pixel-btn" style="background: #888;">停止</button>
+        <span style="font-family: var(--font-retro); font-size: 11px; margin-left: 10px;">時間：<span id="current-time-lbl" class="text-gold">0</span> ms</span>
+      </div>
+      <div class="d-flex gap-10 align-center">
+        <span id="save-status" style="font-size: 12px; color: #aaa;">草稿已同步</span>
+        <button id="btn-save-server" class="pixel-btn" style="background: var(--color-up); color: #000;">💾 儲存題庫草稿</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MIDI Import Modal ===== -->
+  <div id="midi-import-overlay" class="midi-import-overlay" style="display:none;">
+    <div class="midi-import-box">
+      <h3 class="retro-text text-cyan" style="font-size: 14px; margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">
+        🎵 匯入 MusicXML／MIDI 檔案
+      </h3>
+
+      <!-- Step 1: File selection -->
+      <div id="midi-step-1">
+        <p style="font-size: 12px; color: #aaa; margin-bottom: 15px; line-height: 1.6;">
+          若譜面由 MuseScore 製作，建議優先匯入未壓縮 MusicXML（.musicxml／.xml）；也支援 MIDI。<br>
+          系統會讀取書面音高與時值，並精確對應後台「口琴單音音檔」。
+        </p>
+        
+        <div style="border: 3px dashed var(--primary-color); padding: 20px; text-align: center; margin-bottom: 15px; cursor: pointer;" id="midi-drop-zone">
+          <div style="font-size: 30px; margin-bottom: 8px;">🎼</div>
+          <p style="font-size: 12px;">點擊選取 .musicxml／.xml／.mid／.midi，或拖曳至此</p>
+          <input type="file" id="midi-file-input" accept=".musicxml,.xml,.mid,.midi" style="display:none;">
+        </div>
+
+        <!-- Conversion settings -->
+        <div style="border: 2px solid #333; padding: 12px; margin-bottom: 15px;">
+          <div class="retro-text text-gold" style="font-size: 10px; margin-bottom: 10px;">轉換設定</div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 4px;">起始偏移 (ms)</label>
+              <input type="number" id="midi-offset" class="pixel-box" style="padding:5px; margin:0; background:#000; color:#fff; width:100%;" value="1000" min="0">
+              <span style="font-size: 10px; color: #666;">第一個音符前的等待時間</span>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 4px;">重複音合併門檻 (ms)</label>
+              <input type="number" id="midi-min-gap" class="pixel-box" style="padding:5px; margin:0; background:#000; color:#fff; width:100%;" value="10" min="0" max="100">
+              <span style="font-size: 10px; color: #666;">只合併幾乎同時出現的同音重複資料；不會刪掉快速旋律</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label style="display: block; margin-bottom: 6px; font-size: 12px;">軌道方向分配方式</label>
+            <select id="midi-dir-mode" class="pixel-box" style="padding:5px; margin:0; background:#000; color:#fff; width:100%;">
+              <option value="pitch-quadrant">依音高高低分四組（低→左、中低→下、中高→上、高→右）</option>
+              <option value="pitch-mod4">依音高 mod 4 循環分配（均勻分布四軌）</option>
+              <option value="round-robin">依出現順序循環分配（左→下→上→右→循環）</option>
+            </select>
+          </div>
+
+          <div style="margin-top: 12px; border-top: 1px dashed #555; padding-top: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+              <input type="checkbox" id="midi-keep-long-notes" checked>
+              保留 MIDI 內的長音 (Hold Notes) 長度設定
+            </label>
+          </div>
+        </div>
+
+        <!-- Track selection (populated after MIDI parse) -->
+        <div id="midi-track-section" style="display:none;">
+          <div class="retro-text text-cyan" style="font-size: 10px; margin-bottom: 8px;">請選擇要使用的聲部／MIDI 軌道（可複選）：</div>
+          <div id="midi-tracks-list" style="max-height: 160px; overflow-y: auto; border: 2px solid #333; padding: 8px;"></div>
+          <div style="margin-top: 10px; font-size: 11px; color: #888;">
+            偵測到的音符音域：<span id="midi-pitch-range" class="text-cyan">-</span>
+          </div>
+          <div id="midi-audit-table" style="margin-top:10px;max-height:180px;overflow:auto;font-size:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="d-flex gap-10" style="margin-top: 15px;">
+        <button id="btn-midi-parse" class="pixel-btn" style="background: #9B59B6; color: #fff; flex: 1;">解析檔案</button>
+        <button id="btn-midi-confirm" class="pixel-btn" style="background: var(--color-left); color: #fff; flex: 1; display:none;">套用至譜面</button>
+        <button id="btn-midi-close" class="pixel-btn pixel-btn-danger" style="flex: 0;">關閉</button>
+      </div>
+      
+      <!-- Status log -->
+      <div id="midi-status" style="margin-top: 10px; font-size: 11px; min-height: 22px; color: var(--primary-color); font-family: monospace;"></div>
+    </div>
+  </div>
+
+  <!-- Editor logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/audio-engine.js?v=53"></script>
+  <script src="/js/editor.js?v=610"></script>
+</body>
+</html>

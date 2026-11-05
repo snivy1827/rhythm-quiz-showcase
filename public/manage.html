@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶可夢猜歌遊戲｜內容管理後台</title>
+  <link rel="stylesheet" href="/css/manage.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">POKÉMON RHYTHM GAME</p>
+      <h1>內容管理後台</h1>
+    </div>
+    <div class="topbar-actions">
+      <span id="live-status" class="status-pill"><span class="status-dot"></span>即時連線中</span>
+      <a class="ghost-btn" href="/admin.html">主持控制</a>
+      <a class="ghost-btn" href="/editor.html">譜面編輯</a>
+      <a class="ghost-btn" href="/host.html" target="_blank">投影畫面</a>
+      <button id="logout-btn" class="ghost-btn danger-text">登出</button>
+    </div>
+  </header>
+
+  <nav class="tabbar" aria-label="後台功能">
+    <button class="tab-btn active" data-tab="dashboard">即時總覽</button>
+    <button class="tab-btn" data-tab="questions">題庫管理</button>
+    <button class="tab-btn" data-tab="assets">素材管理</button>
+    <button class="tab-btn" data-tab="settings">計分與入場設定</button>
+    <button class="tab-btn" data-tab="rules">遊戲規則</button>
+    <button class="tab-btn" data-tab="endpages">活動結束頁</button>
+    <button class="tab-btn" data-tab="versions">版本與備份</button>
+  </nav>
+
+  <main class="page-shell">
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">LIVE DASHBOARD</p>
+          <h2>目前伺服器狀態</h2>
+        </div>
+        <button id="refresh-all-btn" class="secondary-btn">重新整理</button>
+      </div>
+      <div class="metric-grid">
+        <article class="metric-card"><span>草稿題目</span><strong id="metric-draft">—</strong></article>
+        <article class="metric-card"><span>已發布題目</span><strong id="metric-published">—</strong></article>
+        <article class="metric-card"><span>已上傳素材</span><strong id="metric-assets">—</strong></article>
+        <article class="metric-card"><span>連線玩家</span><strong id="metric-players">—</strong></article>
+      </div>
+      <div class="two-column">
+        <article class="panel-card">
+          <div class="card-title-row"><h3>遊戲進度</h3><span id="game-status-badge" class="soft-badge">—</span></div>
+          <dl class="detail-list">
+            <div><dt>房號</dt><dd id="game-room">—</dd></div>
+            <div><dt>資料儲存</dt><dd id="storage-mode">—</dd></div>
+            <div><dt>目前題目</dt><dd id="game-question">—</dd></div>
+            <div><dt>待套用發布</dt><dd id="game-pending">—</dd></div>
+          </dl>
+        </article>
+        <article class="panel-card">
+          <h3>隊伍連線狀態</h3>
+          <div id="dashboard-teams" class="stack gap-sm muted">尚未建立隊伍</div>
+        </article>
+      </div>
+      <article class="panel-card notice-card">
+        <h3>草稿與正式版已分離</h3>
+        <p>你在題庫或譜面編輯器按「儲存」時，只會更新草稿。確認無誤後再按「發布正式題庫」，才會成為活動使用版本。活動進行中發布的新版本會等到重置遊戲後套用，避免中途換題。</p>
+      </article>
+    </section>
+
+    <section id="tab-questions" class="tab-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">QUESTION BANK</p>
+          <h2>題庫與寶可夢設定</h2>
+        </div>
+        <div class="toolbar">
+          <span id="draft-state" class="muted">已同步</span>
+          <button id="add-question-btn" class="secondary-btn">新增題目</button>
+          <button id="save-draft-btn" class="secondary-btn">儲存草稿</button>
+          <button id="publish-btn" class="primary-btn">發布正式題庫</button>
+        </div>
+      </div>
+
+      <div class="question-layout">
+        <aside class="question-sidebar panel-card">
+          <div class="card-title-row"><h3>題目順序</h3><span id="question-count" class="soft-badge">0</span></div>
+          <div id="question-list" class="question-list"></div>
+        </aside>
+
+        <article class="panel-card question-editor">
+          <div id="question-empty" class="empty-state">請先新增或選擇一題。</div>
+          <form id="question-form" class="stack gap-lg" hidden>
+            <div class="card-title-row">
+              <div><p class="eyebrow">SELECTED QUESTION</p><h3 id="selected-question-title">題目設定</h3></div>
+              <label class="toggle-field"><input id="q-enabled" type="checkbox"><span>列入正式題庫</span></label>
+            </div>
+
+            <div class="form-grid two">
+              <label class="field"><span>歌曲名稱／答案</span><input id="q-song-name" type="text" required></label>
+              <label class="field"><span>寶可夢名稱</span><input id="q-pokemon-name" type="text" required></label>
+              <label class="field"><span>寶可夢點數分類</span>
+                <select id="q-evolution-type">
+                  <option value="three-stage-1">三階進化－第一階</option>
+                  <option value="three-stage-2">三階進化－第二階</option>
+                  <option value="three-stage-3">三階進化－第三階</option>
+                  <option value="two-stage-1">二階進化－第一階</option>
+                  <option value="two-stage-2">二階進化－第二階</option>
+                  <option value="no-evolution">無進化</option>
+                  <option value="legendary">傳說／神獸</option>
+                  <option value="custom">自訂分數（手動輸入）</option>
+                </select>
+              </label>
+              <label class="field" id="q-custom-points-field" hidden><span>本題寶可夢自訂分數</span><input id="q-custom-points" type="number" min="0" step="1" value="0"><small>選擇「自訂分數」時使用；此數值只計入最後的寶可夢總積分，不會在答案揭曉畫面公開。</small></label>
+              <label class="field"><span>寶可夢素材圖（捕捉揭曉時顯示）</span><select id="q-pokemon-image"></select><small>節奏與猜歌階段不顯示剪影；進入捕捉時才揭曉此圖。</small></label>
+              <label class="field"><span>題目素材</span><select id="q-question-asset"></select><small>同一欄可選 MusicXML、MIDI、WAV、MP3 等題目素材。MusicXML／MIDI 會自動建立音符；WAV／MP3 則分析聲音起點產生箭頭。</small></label>
+              <label class="field" id="q-audio-offset-field"><span>音檔起始偏移（ms）</span><input id="q-audio-offset" type="number" step="10" value="0"><small>僅音檔題目使用；例如真正旋律從音檔第 5 秒開始，填 5000。</small></label>
+              <label class="field" id="q-audio-auto-density-field"><span>音檔自動箭頭密度</span>
+                <select id="q-audio-auto-density"><option value="sparse">較少</option><option value="normal">一般</option><option value="dense">較多</option></select>
+                <button type="button" id="q-generate-audio-chart" class="pixel-btn" style="margin-top:8px">從目前音檔重新分析箭頭</button>
+                <small id="q-audio-auto-status">WAV／MP3 只做節奏／聲音起點分析，不會假裝能準確還原原曲音高。</small>
+              </label>
+              <label class="field"><span>題目素材狀態</span><div class="pixel-box" id="q-question-asset-status" style="padding:12px;line-height:1.6;min-height:48px">尚未選擇題目素材</div></label>
+            </div>
+
+            <div class="preview-grid">
+              <div class="preview-box">
+                <span class="preview-label">寶可夢圖片預覽</span>
+                <div id="pokemon-preview" class="pokemon-preview">尚未選擇</div>
+              </div>
+              <div class="preview-box">
+                <span class="preview-label">參考音檔預覽</span>
+                <audio id="audio-preview" controls preload="metadata"></audio>
+              </div>
+            </div>
+
+            <div class="two-column settings-columns">
+              <article class="sub-card stack gap-md">
+                <div class="card-title-row">
+                  <h3>備援選擇題（A–D 必填）</h3>
+                  <span class="soft-badge">固定啟用</span>
+                </div>
+                <p class="tiny muted">每題皆保留備援選擇題；四個選項未填完整時，系統會阻止發布正式題庫。</p>
+                <div class="form-grid two">
+                  <label class="field"><span>選項 A</span><input id="q-choice-0" type="text"></label>
+                  <label class="field"><span>選項 B</span><input id="q-choice-1" type="text"></label>
+                  <label class="field"><span>選項 C</span><input id="q-choice-2" type="text"></label>
+                  <label class="field"><span>選項 D</span><input id="q-choice-3" type="text"></label>
+                </div>
+                <label class="field"><span>正確答案</span>
+                  <select id="q-choice-correct">
+                    <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+                  </select>
+                </label>
+              </article>
+
+              <article class="sub-card stack gap-md">
+                <h3>完整題目／口琴演奏頁</h3>
+                <label class="field"><span>播放來源</span>
+                  <select id="q-performance-type">
+                    <option value="none">現場演奏／不嵌入媒體</option>
+                    <option value="youtube">YouTube 內嵌影片</option>
+                    <option value="video">已上傳影片</option>
+                    <option value="audio">已上傳音檔</option>
+                  </select>
+                </label>
+                <label class="field" id="performance-youtube-field"><span>YouTube 網址</span><input id="q-performance-youtube" type="url" placeholder="https://www.youtube.com/watch?v=..."></label>
+                <label class="field" id="performance-asset-field"><span>演奏媒體素材</span><select id="q-performance-asset"></select></label>
+                <div class="form-grid two">
+                  <label class="field"><span>開始秒數</span><input id="q-performance-start" type="number" min="0" step="0.1"></label>
+                  <label class="field"><span>結束秒數（0＝播到結束）</span><input id="q-performance-end" type="number" min="0" step="0.1"></label>
+                </div>
+                <label class="field"><span>主持提示（僅主持端顯示）</span><textarea id="q-performance-notes" rows="3" placeholder="例如：純口琴、播放 YouTube、搭配去人聲伴奏"></textarea></label>
+              </article>
+            </div>
+
+            <div class="question-actions">
+              <span>目前譜面：<strong id="q-note-count">0</strong> 個音符</span>
+              <div class="toolbar">
+                <button id="move-up-btn" type="button" class="ghost-btn">往上移</button>
+                <button id="move-down-btn" type="button" class="ghost-btn">往下移</button>
+                <button id="duplicate-question-btn" type="button" class="ghost-btn">複製題目</button>
+                <button id="open-editor-btn" type="button" class="secondary-btn">開啟 MIDI／譜面編輯器</button>
+                <button id="delete-question-btn" type="button" class="ghost-btn danger-text">刪除</button>
+              </div>
+            </div>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-assets" class="tab-panel">
+      <div class="section-heading"><div><p class="eyebrow">ASSET LIBRARY</p><h2>素材上傳與預覽</h2></div></div>
+      <article class="panel-card upload-panel">
+        <div class="form-grid three">
+          <label class="field"><span>素材類型</span>
+            <select id="asset-category">
+              <option value="pokemon">寶可夢圖片</option>
+              <option value="question">題目素材（MusicXML／MIDI／WAV／MP3）</option>
+              <option value="performance">演奏所需素材（伴奏音檔／影片）</option>
+              <option value="note">口琴單音音檔</option>
+            </select>
+          </label>
+          <label class="field file-field"><span>選擇檔案（每檔上限 25 MB）</span><input id="asset-file" type="file" multiple></label>
+          <button id="upload-asset-btn" class="primary-btn align-end" type="button">上傳素材</button>
+        </div>
+        <div id="note-upload-options" class="note-upload-options" hidden>
+          <label class="field"><span>音名（單檔可手動指定）</span><input id="asset-note-pitch" type="text" placeholder="例如 C4、F#5、Bb4"></label>
+          <label class="toggle-field"><input id="asset-note-replace" type="checkbox"><span>同音名已存在時取代舊檔</span></label>
+          <p class="tiny muted">批次上傳時請直接命名為 C4.wav、C#4.wav、D4.wav…；系統會依檔名建立「MIDI 音高 → 口琴錄音」對照。</p>
+        </div>
+        <p id="upload-message" class="form-message"></p>
+      </article>
+      <article class="panel-card note-library-panel">
+        <div class="card-title-row"><h3>口琴單音庫檢查</h3><span id="note-library-count" class="soft-badge">0 個音</span></div>
+        <p class="tiny muted">譜面會精確使用同音名錄音，不會再把 MIDI 音高吸附到附近音。缺少音檔時才使用電子音並在編輯器警告。</p>
+        <div id="note-library-grid" class="note-library-grid"></div>
+      </article>
+      <div id="asset-list" class="asset-grid"></div>
+    </section>
+
+    <section id="tab-settings" class="tab-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">GAME CONFIGURATION</p><h2>計分、房間與 QR 入場</h2></div>
+        <button id="save-settings-btn" class="primary-btn">儲存設定</button>
+      </div>
+      <div class="two-column settings-columns">
+        <article class="panel-card stack gap-lg">
+          <h3>房間設定</h3>
+          <label class="field"><span>房號</span><input id="s-room-id" type="text" maxlength="12"></label>
+          <label class="field"><span>預設隊伍名稱（每行一隊）</span><textarea id="s-team-names" rows="6"></textarea></label>
+          <p class="tiny muted">房號與隊伍若在遊戲中修改，建議回主持控制頁重置房間後再讓玩家加入。</p>
+        </article>
+
+        <article class="panel-card stack gap-lg">
+          <h3>QR 入場保護</h3>
+          <label class="toggle-field"><input id="s-access-enabled" type="checkbox"><span>玩家必須使用帶入場權杖的 QR 連結</span></label>
+          <label class="field"><span>目前入場權杖</span><input id="s-access-token" type="text" readonly></label>
+          <label class="field"><span>本機測試網址</span><input id="s-join-url" type="text" readonly></label>
+          <button id="regenerate-token-btn" class="secondary-btn" type="button">產生新的入場權杖</button>
+          <p class="tiny muted">重新產生後，舊入場連結會失效。正式活動的 Cloudflare 公開網址與投影 QR Code 請到「主持控制」設定；這裡的網址僅供本機測試。</p>
+        </article>
+      </div>
+
+      <article class="panel-card stack gap-lg">
+        <h3>節奏判定與分數</h3>
+        <div class="form-grid four">
+          <label class="field"><span>Perfect 判定窗（ms）</span><input id="s-perfect-window" type="number" min="10"></label>
+          <label class="field"><span>Good 判定窗（ms）</span><input id="s-good-window" type="number" min="20"></label>
+          <label class="field"><span>Perfect 基礎分</span><input id="s-perfect-base" type="number" step="0.1"></label>
+          <label class="field"><span>Good 基礎分</span><input id="s-good-base" type="number" step="0.1"></label>
+          <label class="field"><span>Miss 分數</span><input id="s-miss-score" type="number" step="0.1"></label>
+          <label class="field"><span>Combo 上限</span><input id="s-combo-cap" type="number" min="0"></label>
+          <label class="field"><span>Perfect Combo 係數</span><input id="s-perfect-combo" type="number" step="0.01"></label>
+          <label class="field"><span>Good Combo 係數</span><input id="s-good-combo" type="number" step="0.01"></label>
+          <label class="field"><span>長音完成基礎分</span><input id="s-hold-base" type="number" step="0.1"></label>
+          <label class="field"><span>長音 Combo 係數</span><input id="s-hold-combo" type="number" step="0.01"></label>
+          <label class="field"><span>提早放開容許（ms）</span><input id="s-hold-tolerance" type="number" min="0"></label>
+          <label class="field"><span>隊伍節奏成績</span><input value="每題輪流 1 名組員操作（自動輪替）" readonly></label>
+        </div>
+      </article>
+
+      <article class="panel-card stack gap-lg">
+        <div>
+          <h3>本題猜歌倍率</h3>
+          <p class="tiny muted">V7.1 可選擇猜題加成的基準：依各隊自己的音遊分數，或依本題最高音遊分數。後者能避免操作較弱的隊伍即使猜中，加成仍過低。只影響本題寶可夢捕捉判定，不累積到最終寶可夢總分。</p>
+        </div>
+        <div class="form-grid two">
+          <label class="field"><span>猜題加成基準</span><select id="s-round-bonus-base"><option value="own-team">各隊自己的音遊實得分</option><option value="round-highest">本題最高音遊分數</option></select><small>推薦先測「本題最高音遊分數」，可讓猜歌價值更穩定。</small></label>
+          <div></div>
+          <label class="field"><span>直接猜中：音遊分數加成（%）</span><input id="s-direct-guess-percent" type="number" min="0" max="300" step="1"><small>例如 50 = 音遊實得分 ×1.50</small></label>
+          <label class="field"><span>備援選擇題答對：音遊分數加成（%）</span><input id="s-choice-percent" type="number" min="0" max="300" step="1"><small>例如 25 = 音遊實得分 ×1.25</small></label>
+        </div>
+      </article>
+
+
+      <article class="panel-card stack gap-lg">
+        <h3>最終結算背景音樂</h3>
+        <p class="tiny muted">建議優先使用已上傳音檔，活動現場不依賴 YouTube 網路與自動播放政策。進入最終結算後由主持後台手動播放／暫停。</p>
+        <div class="form-grid two">
+          <label class="field"><span>背景音樂來源</span><select id="s-final-bgm-type"><option value="none">不使用</option><option value="audio">已上傳音檔</option><option value="youtube">YouTube</option></select></label>
+          <label class="field"><span>已上傳音檔</span><select id="s-final-bgm-asset"></select></label>
+          <label class="field"><span>YouTube 網址</span><input id="s-final-bgm-youtube" type="url" placeholder="https://www.youtube.com/watch?v=..."></label>
+          <label class="field"><span>音量（0～100%）</span><input id="s-final-bgm-volume" type="number" min="0" max="100" step="5"></label>
+        </div>
+      </article>
+
+      <article class="panel-card stack gap-lg">
+        <h3>捕捉寶可夢點數</h3>
+        <p class="tiny muted">一般題目可依分類套用固定分數；特殊寶可夢可在單題設定選擇「自訂分數」並直接輸入。</p>
+        <div class="form-grid four">
+          <label class="field"><span>三階－第一階</span><input id="p-three-1" type="number"></label>
+          <label class="field"><span>三階－第二階</span><input id="p-three-2" type="number"></label>
+          <label class="field"><span>三階－第三階</span><input id="p-three-3" type="number"></label>
+          <label class="field"><span>二階－第一階</span><input id="p-two-1" type="number"></label>
+          <label class="field"><span>二階－第二階</span><input id="p-two-2" type="number"></label>
+          <label class="field"><span>無進化</span><input id="p-none" type="number"></label>
+          <label class="field"><span>傳說／神獸</span><input id="p-legendary" type="number"></label>
+        </div>
+      </article>
+      <p id="settings-message" class="form-message"></p>
+    </section>
+
+
+    <section id="tab-rules" class="tab-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">GAME RULES</p><h2>第一題前的遊戲規則說明</h2></div>
+        <div class="toolbar">
+          <span id="rules-save-state" class="muted">已同步</span>
+          <button id="save-rules-btn" class="primary-btn">儲存遊戲規則</button>
+        </div>
+      </div>
+      <article class="panel-card notice-card">
+        <label class="toggle-field"><input id="rules-enabled" type="checkbox"><span>進入第一題前顯示遊戲規則</span></label>
+        <p class="tiny muted" style="margin-top:10px;">每一頁可使用 Markdown。主持人會在「主持控制」手動切換上一頁／下一頁，因此規則較長時可拆成多頁。</p>
+      </article>
+      <div class="rule-editor-layout">
+        <aside class="panel-card rule-page-sidebar">
+          <div class="card-title-row"><h3>規則頁面</h3><span id="rule-page-count" class="soft-badge">0 頁</span></div>
+          <div id="rule-page-list" class="rule-page-list"></div>
+          <button id="add-rule-page-btn" type="button" class="secondary-btn" style="width:100%;margin-top:12px;">＋ 新增一頁</button>
+        </aside>
+        <article class="panel-card stack gap-lg">
+          <div id="rule-editor-empty" class="empty-state">請新增或選擇一頁規則。</div>
+          <div id="rule-editor-form" class="stack gap-lg" hidden>
+            <div class="form-grid two">
+              <label class="field"><span>頁面標題</span><input id="rule-page-title" type="text" maxlength="80"></label>
+              <div class="field"><span>頁面操作</span><div class="toolbar"><button id="rule-move-up" type="button" class="ghost-btn">往上移</button><button id="rule-move-down" type="button" class="ghost-btn">往下移</button><button id="rule-delete-page" type="button" class="ghost-btn danger-text">刪除此頁</button></div></div>
+            </div>
+            <div class="rule-edit-grid">
+              <label class="field"><span>Markdown 內容</span><textarea id="rule-page-markdown" rows="22" spellcheck="false" placeholder="# 標題\n\n- 規則一\n- 規則二\n\n**重要內容**"></textarea></label>
+              <div class="field"><span>投影預覽</span><div id="rule-preview" class="rule-markdown-preview"></div></div>
+            </div>
+            <details class="markdown-help">
+              <summary>Markdown 語法小抄</summary>
+              <div class="tiny muted"><code># 大標題</code>、<code>## 次標題</code>、<code>**粗體**</code>、<code>*斜體*</code>、<code>- 項目</code>、<code>1. 編號</code>、<code>&gt; 提示框</code>、<code>`按鍵`</code>、<code>---</code> 分隔線。</div>
+            </details>
+          </div>
+        </article>
+      </div>
+    </section>
+
+
+    <section id="tab-endpages" class="tab-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">ACTIVITY END PAGES</p><h2>活動結束頁｜自由編輯</h2></div>
+        <div class="toolbar"><span id="end-save-state" class="muted">已同步</span><button id="save-end-pages-btn" class="primary-btn">儲存活動結束頁</button></div>
+      </div>
+      <article class="panel-card notice-card">
+        <label class="toggle-field"><input id="end-pages-enabled" type="checkbox"><span>最終排名後可顯示活動結束頁</span></label>
+        <p class="tiny muted" style="margin-top:10px;">自由畫布以 16:9（1600×900）為基準，會自動適應目前視窗大小，不需要另外縮放瀏覽器。文字與圖片都可直接拖曳、縮放；圖片數量不限。</p>
+      </article>
+      <div class="rule-editor-layout end-free-layout">
+        <aside class="panel-card rule-page-sidebar">
+          <div class="card-title-row"><h3>結束頁面</h3><span id="end-page-count" class="soft-badge">0 頁</span></div>
+          <div id="end-page-list" class="rule-page-list"></div>
+          <button id="add-end-page-btn" type="button" class="secondary-btn" style="width:100%;margin-top:12px;">＋ 新增一頁</button>
+        </aside>
+        <article class="panel-card stack gap-lg end-free-main">
+          <div id="end-editor-empty" class="empty-state">請新增或選擇一頁活動結束頁。</div>
+          <div id="end-editor-form" class="stack gap-lg" hidden>
+            <div class="form-grid two">
+              <label class="field"><span>頁面名稱（僅後台辨識）</span><input id="end-page-title" type="text" maxlength="80"></label>
+              <label class="field"><span>頁面底色</span><input id="end-page-bg" type="color" value="#071014"></label>
+            </div>
+            <div class="field"><span>頁面操作</span><div class="toolbar"><button id="end-move-up" type="button" class="ghost-btn">往上移</button><button id="end-move-down" type="button" class="ghost-btn">往下移</button><button id="end-delete-page" type="button" class="ghost-btn danger-text">刪除此頁</button></div></div>
+
+            <div class="end-free-toolbar">
+              <button id="end-add-text" type="button" class="secondary-btn">＋ 新增文字</button>
+              <label class="secondary-btn end-upload-label">＋ 新增圖片<input id="end-add-image-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden></label>
+              <span class="tiny muted">拖曳元素移動；拖右下角控制點縮放。選取後可用方向鍵微調，Shift＋方向鍵每次移動 10px。</span>
+            </div>
+
+            <div class="end-free-workspace">
+              <div class="end-free-canvas-wrap">
+                <div id="end-free-canvas" class="end-free-canvas" aria-label="活動結束頁自由畫布">
+                  <div id="end-free-stage" class="end-free-stage"></div>
+                </div>
+              </div>
+              <aside class="end-free-inspector">
+                <div id="end-element-empty" class="empty-state small">點選畫布中的文字或圖片後即可編輯。</div>
+                <div id="end-element-form" class="stack gap-md" hidden>
+                  <div class="card-title-row"><h3 id="end-element-heading">元素</h3><span id="end-element-type" class="soft-badge"></span></div>
+                  <div class="form-grid two compact-grid">
+                    <label class="field"><span>X</span><input id="end-el-x" type="number" min="0" max="1600" step="1"></label>
+                    <label class="field"><span>Y</span><input id="end-el-y" type="number" min="0" max="900" step="1"></label>
+                    <label class="field"><span>寬</span><input id="end-el-w" type="number" min="40" max="1600" step="1"></label>
+                    <label class="field"><span>高</span><input id="end-el-h" type="number" min="40" max="900" step="1"></label>
+                  </div>
+                  <div id="end-text-options" class="stack gap-md" hidden>
+                    <label class="field"><span>Markdown 文字</span><textarea id="end-el-markdown" rows="10" spellcheck="false" placeholder="# 謝謝大家參加！"></textarea></label>
+                    <div class="form-grid two compact-grid">
+                      <label class="field"><span>基準字級</span><input id="end-el-font-size" type="number" min="12" max="120" step="1"></label>
+                      <label class="field"><span>對齊</span><select id="end-el-align"><option value="left">靠左</option><option value="center">置中</option><option value="right">靠右</option></select></label>
+                      <label class="field"><span>文字顏色</span><input id="end-el-color" type="color" value="#ffffff"></label>
+                      <label class="toggle-field"><input id="end-el-bg-enabled" type="checkbox"><span>文字框底色</span></label>
+                      <label id="end-el-bg-color-field" class="field"><span>底色</span><input id="end-el-bg-color" type="color" value="#000000"></label>
+                    </div>
+                  </div>
+                  <div id="end-image-options" class="stack gap-md" hidden>
+                    <div id="end-selected-image-preview" class="end-selected-image-preview"></div>
+                    <label class="field"><span>圖片填滿方式</span><select id="end-el-fit"><option value="contain">完整顯示（推薦 QR Code）</option><option value="cover">填滿裁切</option></select></label>
+                    <label class="secondary-btn end-upload-label">更換圖片<input id="end-replace-image-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
+                  </div>
+                  <div class="toolbar wrap-toolbar">
+                    <button id="end-bring-front" type="button" class="ghost-btn">移到最上層</button>
+                    <button id="end-send-back" type="button" class="ghost-btn">移到最下層</button>
+                    <button id="end-delete-element" type="button" class="ghost-btn danger-text">刪除元素</button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+            <details class="markdown-help">
+              <summary>文字元素 Markdown 語法</summary>
+              <div class="tiny muted"><code># 大標題</code>、<code>## 次標題</code>、<code>**粗體**</code>、<code>*斜體*</code>、<code>- 項目</code>、<code>1. 編號</code>、<code>&gt; 提示框</code>、<code>`按鍵`</code>、<code>---</code> 分隔線。</div>
+            </details>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-versions" class="tab-panel">
+      <div class="section-heading"><div><p class="eyebrow">VERSION CONTROL</p><h2>正式版本與資料備份</h2></div></div>
+      <div class="two-column">
+        <article class="panel-card">
+          <div class="card-title-row"><h3>發布版本</h3><button id="refresh-versions-btn" class="ghost-btn">重新整理</button></div>
+          <div id="version-list" class="stack gap-sm muted">尚無發布版本</div>
+        </article>
+        <article class="panel-card stack gap-lg">
+          <h3>題庫與設定備份</h3>
+          <p class="muted">匯出會包含草稿、正式題庫、計分設定及素材清單；實體圖片／音檔不會內嵌在 JSON；本機模式請另備份 uploads，雲端模式則保存在 Supabase Storage。</p>
+          <a class="secondary-btn button-link" href="/api/admin/export">下載 JSON 備份</a>
+          <label class="field"><span>匯入 JSON 備份</span><input id="backup-file" type="file" accept="application/json,.json"></label>
+          <button id="import-backup-btn" class="ghost-btn danger-text">匯入並覆蓋現有資料</button>
+          <p id="backup-message" class="form-message"></p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/markdown-lite.js?v=790"></script>
+  <script src="/js/manage.js?v=790"></script>
+</body>
+</html>

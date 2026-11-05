@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "songName": "示範旋律 A",
+    "enabled": true,
+    "pokemon": {
+      "name": "示範角色",
+      "image": ""
+    },
+    "multipleChoice": {
+      "options": [
+        "旋律 A",
+        "旋律 B",
+        "旋律 C",
+        "旋律 D"
+      ],
+      "correctIndex": 0
+    },
+    "notes": [
+      {
+        "time": 1000,
+        "direction": "left",
+        "pitch": "C4",
+        "duration": 0
+      },
+      {
+        "time": 1500,
+        "direction": "down",
+        "pitch": "D4",
+        "duration": 0
+      },
+      {
+        "time": 2000,
+        "direction": "up",
+        "pitch": "E4",
+        "duration": 0
+      },
+      {
+        "time": 2500,
+        "direction": "right",
+        "pitch": "G4",
+        "duration": 0
+      },
+      {
+        "time": 3000,
+        "direction": "left",
+        "pitch": "C4",
+        "duration": 0
+      },
+      {
+        "time": 3500,
+        "direction": "down",
+        "pitch": "D4",
+        "duration": 0
+      },
+      {
+        "time": 4000,
+        "direction": "up",
+        "pitch": "E4",
+        "duration": 0
+      },
+      {
+        "time": 4500,
+        "direction": "right",
+        "pitch": "G4",
+        "duration": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "pokemon-rhythm-game",
+  "version": "2.13.0",
+  "description": "多人寶可夢節奏猜歌遊戲 V7.13：活動結束頁改為「與內容管理編輯器一致」的16:9設計畫布，投影時等比例縮放並精確置中；不再橫向拉伸元素。畫布外區域延續同一頁底色與網格，因此不同螢幕比例也不會出現突兀黑色區塊。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

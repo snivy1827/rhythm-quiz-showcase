@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶可夢猜歌遊戲｜管理員登入</title>
+  <link rel="stylesheet" href="/css/manage.css">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <div class="brand-mark">♪</div>
+    <p class="eyebrow">POKÉMON RHYTHM GAME</p>
+    <h1 id="login-title">管理員登入</h1>
+    <p id="login-desc" class="muted">登入後可管理題目、素材、計分設定及譜面。</p>
+
+    <form id="login-form" class="stack gap-md">
+      <label class="field">
+        <span id="password-label">管理員密碼</span>
+        <input id="password" type="password" minlength="8" autocomplete="current-password" required>
+      </label>
+      <label id="confirm-wrap" class="field" hidden>
+        <span>再次輸入密碼</span>
+        <input id="password-confirm" type="password" minlength="8" autocomplete="new-password">
+      </label>
+      <button id="submit-btn" class="primary-btn" type="submit">登入</button>
+    </form>
+    <p id="login-message" class="form-message"></p>
+    <p class="tiny muted">首次啟動會要求設定至少 8 個字元的管理員密碼。密碼只儲存在本機資料夾的雜湊檔案中。</p>
+  </main>
+  <script src="/js/login.js"></script>
+</body>
+</html>

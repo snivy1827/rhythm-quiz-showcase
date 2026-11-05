@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第五屆猜歌大賽 - 主持人後台控制台</title>
+  <link rel="stylesheet" href="/css/style.css?v=5">
+  <link rel="stylesheet" href="/css/workbench.css?v=52">
+</head>
+<body class="admin-workbench">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <section class="pixel-box pixel-box-primary">
+        <h3 class="text-cyan" style="font-size:16px;margin-bottom:16px;">房間與隊伍設定</h3>
+        <label class="work-field"><span>房號（由內容管理設定）</span><input type="text" id="admin-room-id" value="8888" readonly></label>
+        <label class="work-field"><span>分組名稱（半形逗號分隔）</span><input type="text" id="admin-team-names" value="小火龍隊,傑尼龜隊,妙蛙種子隊,皮卡丘隊"></label>
+        <div class="work-grid-2">
+          <label class="work-field"><span>Perfect（ms）</span><input type="number" id="admin-perfect-window" value="80"></label>
+          <label class="work-field"><span>Good（ms）</span><input type="number" id="admin-good-window" value="180"></label>
+        </div>
+        <button id="btn-setup-room" class="pixel-btn w-100" style="margin-top:12px;">套用房間設定</button>
+        <p class="work-subtle" style="margin-top:10px;">若已有玩家連線或遊戲已開始，系統會再次確認，避免誤重設。</p>
+      </section>
+
+      <section class="pixel-box" style="flex-grow:1;overflow-y:auto;">
+        <h3 class="text-gold text-center" style="font-size:14px;margin-bottom:12px;">連線狀態</h3>
+        <div id="connection-status-panel"><p class="work-subtle">房間尚未建立</p></div>
+      </section>
+    </aside>
+
+    <main class="admin-main">
+      <section class="pixel-box admin-state-bar">
+        <div><span class="work-subtle">狀態</span><strong id="admin-status-lbl">未初始化</strong></div>
+        <div class="text-right"><span class="work-subtle">目前題目</span><strong id="admin-question-lbl">無</strong></div>
+      </section>
+
+      <section class="pixel-box" id="admin-entry-panel">
+        <div class="d-flex justify-between align-center" style="gap:14px;margin-bottom:10px;">
+          <div><h3 class="text-cyan" style="font-size:16px;margin-bottom:4px;">玩家入場 QR</h3><p class="work-subtle">貼入本次 Cloudflare Quick Tunnel 的公開網址。</p></div>
+          <span id="entry-qr-status" class="work-subtle">尚未顯示</span>
+        </div>
+        <div class="entry-url-row">
+          <label class="work-field" style="min-width:0;"><span>本次活動公開網址</span><input id="admin-public-url" type="url" placeholder="https://xxxxx.trycloudflare.com"></label>
+          <button id="btn-apply-public-url" class="pixel-btn" style="background:#2f6f78;color:#fff;padding:10px 14px;">套用網址</button>
+        </div>
+        <div class="d-flex gap-10" style="margin-top:12px;">
+          <button id="btn-show-entry-qr" class="pixel-btn w-100" style="background:#3f7cac;color:#fff;">顯示入場 QR Code</button>
+          <button id="btn-hide-entry-qr" class="pixel-btn w-100" style="background:#59636a;color:#fff;">關閉入場畫面</button>
+        </div>
+      </section>
+
+      <section class="pixel-box pixel-box-primary admin-flow-panel">
+        <div class="flow-heading">
+          <div><p class="work-subtle">GAME FLOW</p><h2 class="text-cyan">遊戲流程</h2></div>
+          <span id="flow-hint" class="work-subtle">依目前狀態顯示唯一主要下一步</span>
+        </div>
+
+        <button id="btn-primary-flow" class="pixel-btn primary-flow-btn">載入第 1 題</button>
+
+        <section class="pixel-box contextual-panel" id="admin-judging-panel" style="display:none;">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">答題判定</h3>
+          <p class="work-subtle" style="margin-bottom:12px;">勾選本題答對的隊伍。答題加成只用於決定本題捕捉權，不會列入最終總積分。</p>
+          <div id="admin-choice-answer-panel" style="margin:0 0 14px;padding:12px;border:1px solid #35515b;border-radius:10px;background:#0d171d;display:none;">
+            <div style="font-weight:800;margin-bottom:8px;color:#9fe7e2;">主持人答案提示（不會投影）</div>
+            <div id="admin-choice-answer-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+          </div>
+          <div id="admin-teams-checkboxes" class="d-flex flex-column gap-10"></div>
+          <div class="d-flex gap-10" style="margin-top:15px;">
+            <button id="btn-show-choice" class="pixel-btn w-100" style="background:#7d5aa6;">開啟備援選擇題</button>
+            <button id="btn-submit-guess" class="pixel-btn w-100" style="background:var(--color-down);">確認答對隊伍 → 進入完整題目</button>
+          </div>
+        </section>
+
+        <section class="pixel-box contextual-panel" id="admin-performance-panel" style="display:none;">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">完整題目／口琴演奏</h3>
+          <p class="work-subtle" style="margin-bottom:12px;">媒體不會自動播放。YouTube、影片或音檔請直接在投影畫面的播放器操作；現場口琴演奏則直接進行即可。</p>
+          <button id="btn-reveal-catch" class="pixel-btn w-100" style="background:var(--color-right);">演奏完成 → 揭曉寶可夢並捕捉</button>
+        </section>
+
+        <section class="pixel-box contextual-panel" id="admin-round-score-panel" style="display:none;">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">本題捕捉判定分數</h3>
+          <p class="work-subtle" style="margin-bottom:10px;">僅主持後台顯示：節奏分數＋答題加成＝本題捕捉判定總分。最終總積分仍只計算捕捉到的寶可夢點數。</p>
+          <div id="admin-round-score-breakdown" class="d-flex flex-column gap-10"></div>
+        </section>
+
+
+        <section class="pixel-box contextual-panel" id="admin-final-panel" style="display:none;">
+          <div class="d-flex justify-between align-center" style="gap:12px;flex-wrap:wrap;">
+            <div>
+              <h3 class="text-gold" style="font-size:15px;margin-bottom:6px;">最終公布控制</h3>
+              <p id="settlement-control-status" class="work-subtle">等待主持人開始公布，可隨時切換手動／自動節奏。</p><div class="d-flex gap-10" style="margin-top:10px;flex-wrap:wrap;"><button id="btn-final-bgm-play" class="pixel-btn" type="button">♫ 播放結算 BGM</button><button id="btn-final-bgm-pause" class="pixel-btn" type="button">⏸ 暫停 BGM</button></div>
+            </div>
+            <label class="work-field" style="min-width:170px;"><span>自動每組間隔</span>
+              <select id="admin-settlement-interval" class="work-select">
+                <option value="4000">4 秒</option>
+                <option value="6000" selected>6 秒</option>
+                <option value="8000">8 秒</option>
+                <option value="10000">10 秒</option>
+              </select>
+            </label>
+          </div>
+          <div class="settlement-control-grid" style="margin-top:14px;">
+            <button id="btn-settlement-auto" class="pixel-btn" style="background:#2f7f74;color:#fff;">▶ 自動開始／繼續</button>
+            <button id="btn-settlement-pause" class="pixel-btn" style="background:#59636a;color:#fff;">⏸ 暫停自動公布</button>
+            <button id="btn-settlement-prev" class="pixel-btn" style="background:#445a68;color:#fff;">← 上一組</button>
+            <button id="btn-settlement-next" class="pixel-btn" style="background:#3f7cac;color:#fff;">下一組 →</button>
+            <button id="btn-settlement-wait" class="pixel-btn" style="background:#6c5a7c;color:#fff;">回到等待畫面</button>
+            <button id="btn-settlement-final" class="pixel-btn" style="background:#b98a2f;color:#111;font-weight:800;">顯示最終排名與冠軍</button>
+            <button id="btn-show-end-pages" class="pixel-btn" style="background:#2f7f74;color:#fff;font-weight:800;">活動結束頁 →</button>
+          </div>
+          <p class="work-subtle" style="margin-top:12px;">主持人可以先停留、講話、臨時改用手動逐組揭曉；不會因進入最終環節就被自動流程綁死。</p>
+        </section>
+
+
+
+        <section class="pixel-box contextual-panel" id="admin-end-pages-panel" style="display:none;">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">活動結束頁控制</h3>
+          <p id="admin-end-page-label" class="work-subtle" style="margin-bottom:10px;">第 1 / 1 頁</p>
+          <select id="admin-end-page-select" class="work-select" style="width:100%;"></select>
+          <div class="d-flex gap-10" style="margin-top:10px;flex-wrap:wrap;"><button id="btn-end-page-prev" class="pixel-btn">← 上一頁</button><button id="btn-end-page-next" class="pixel-btn">下一頁 →</button><button id="btn-end-pages-back-final" class="pixel-btn" style="background:#6c5a7c;color:#fff;margin-left:auto;">← 回到最終排名</button></div>
+        </section>
+              <section id="admin-rules-panel" class="pixel-box" style="display:none;margin-top:14px;padding:16px;">
+        <div class="d-flex justify-between align-center" style="gap:12px;">
+          <div>
+            <h3 class="text-gold" style="font-size:15px;margin-bottom:6px;">遊戲規則投影控制</h3>
+            <p id="admin-rules-page-label" class="work-subtle" style="margin-top:7px;">第 1 / 1 頁</p>
+          </div>
+          <select id="admin-rules-page-select" style="min-width:210px;"></select>
+        </div>
+        <div class="d-flex" style="gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button id="btn-rules-prev" class="pixel-btn" type="button">← 上一頁</button>
+          <button id="btn-rules-next" class="pixel-btn" type="button">下一頁 →</button>
+          <button id="btn-rules-finish" class="pixel-btn" type="button" style="background:#2f7f74;color:white;margin-left:auto;">規則說明完成 → 載入第 1 題</button>
+        </div>
+      </section>
+
+<section class="pixel-box contextual-panel" id="admin-question-nav-panel">
+          <div class="d-flex justify-between align-center" style="gap:12px;flex-wrap:wrap;">
+            <div>
+              <h3 class="text-gold" style="font-size:15px;margin-bottom:6px;">時間控場／跳題</h3>
+              <p class="work-subtle">時間不足時可跳過本題或直接切到指定題。跳過題目不計分、不捕捉；之後有時間仍可點回來重新開始。</p>
+            </div>
+            <button id="btn-skip-current-question" class="pixel-btn" style="background:#8a5a44;color:#fff;">跳過本題 →</button>
+          </div>
+          <div id="admin-question-progress" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:14px;max-height:230px;overflow:auto;padding-right:4px;"></div>
+          <p id="question-jump-status" class="work-subtle" style="margin-top:10px;">已完成的題目會鎖定，避免重複捕捉與重複計分。</p>
+        </section>
+
+        <section class="pixel-box contextual-panel" id="admin-rescue-panel">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">主持救場／防誤觸</h3>
+          <p class="work-subtle" style="margin-bottom:12px;">「重新顯示」不改分數；「回復上一階段」會還原上一個流程檢查點，節奏挑戰進行中不可使用。</p>
+          <div class="d-flex gap-10" style="flex-wrap:wrap;">
+            <button id="btn-redisplay-stage" class="pixel-btn" style="background:#3e6470;color:#fff;">重新顯示目前階段</button>
+            <button id="btn-undo-flow" class="pixel-btn" style="background:#6d5c84;color:#fff;" disabled>↶ 回復上一遊戲階段</button>
+          </div>
+          <p id="undo-flow-label" class="work-subtle" style="margin-top:8px;">目前沒有可回復的流程檢查點。</p>
+        </section>
+        <section class="pixel-box contextual-panel" id="admin-collection-panel">
+          <h3 class="text-gold" style="font-size:15px;margin-bottom:8px;">圖鑑展示</h3>
+          <select id="admin-collection-team" class="work-select"><option value="all">全部小組</option></select>
+          <div class="d-flex gap-10" style="margin-top:10px;">
+            <button id="btn-show-collection" class="pixel-btn w-100" style="background:#3f7cac;">顯示圖鑑</button>
+            <button id="btn-hide-collection" class="pixel-btn w-100" style="background:#666;">返回遊戲畫面</button>
+          </div>
+        </section>
+      </section>
+
+      <details class="pixel-box danger-zone" id="danger-zone">
+        <summary>危險操作：重置整場遊戲</summary>
+        <p class="work-subtle">會清除玩家連線、各隊本場捕捉成果與進度。正常出題流程不需要使用。</p>
+        <div class="d-flex gap-10 align-center" style="margin-top:12px;flex-wrap:wrap;">
+          <button id="btn-arm-reset" class="pixel-btn pixel-btn-danger">我要重置整場遊戲</button>
+          <div id="reset-confirm-row" class="d-flex gap-10 align-center" style="display:none;">
+            <span class="work-subtle">再次確認：</span>
+            <button id="btn-confirm-reset" class="pixel-btn pixel-btn-danger">確定清空並回到大廳</button>
+            <button id="btn-cancel-reset" class="pixel-btn" style="background:#59636a;color:#fff;">取消</button>
+          </div>
+        </div>
+      </details>
+
+      <section class="pixel-box admin-links">
+        <span>快速連結</span>
+        <a href="/host.html" target="_blank" class="text-cyan">投影大螢幕</a>
+        <a href="/manage.html" class="text-gold">內容管理</a>
+        <a href="/editor.html" target="_blank">譜面編輯器</a>
+      </section>
+    </main>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/admin.js?v=760"></script>
+</body>
+</html>

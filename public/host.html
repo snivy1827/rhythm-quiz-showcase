@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第五屆猜歌大賽 - 主持人投影大螢幕</title>
+  <link rel="stylesheet" href="/css/style.css?v=713">
+
+  <style>
+    .sync-calibration-button{position:fixed;right:16px;bottom:16px;z-index:12050;background:#151d26;color:#e9ffff;border:1px solid #66fcf1;border-radius:8px;padding:9px 13px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.38);opacity:.94}
+    .sync-calibration-button:hover{opacity:1}
+    .sync-calibration-panel{position:fixed;right:16px;bottom:62px;z-index:12060;width:360px;max-width:calc(100vw - 32px);background:#151922;color:#eef3f6;border:1px solid #4e5b68;border-radius:10px;padding:16px;box-shadow:0 18px 45px rgba(0,0,0,.5);font-family:Arial,"Microsoft JhengHei",sans-serif;text-align:left}
+    .sync-calibration-head{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:8px}.sync-calibration-head button{background:none;border:0;color:#fff;font-size:24px;cursor:pointer}
+    .sync-calibration-panel p{font-size:12px;color:#aeb8c1;line-height:1.55;margin:0 0 12px}.sync-calibration-grid{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;font-size:13px}.sync-calibration-grid input{width:76px;background:#0f1319;color:#fff;border:1px solid #56616b;border-radius:5px;padding:5px 7px}
+    .sync-calibration-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:14px 0 10px}.sync-calibration-buttons button,.sync-test-button{background:#232b35;color:#fff;border:1px solid #556474;border-radius:6px;padding:7px;cursor:pointer}.sync-test-button{width:100%;border-color:#4b9ea2}
+    .sync-test-pulse{height:54px;margin:10px 0;display:flex;align-items:center;justify-content:center;font-size:24px;color:#40505a;background:#0d1117;border-radius:7px;transition:background .04s,color .04s,transform .04s}.sync-test-pulse.active{background:#e7fff5;color:#18d68c;transform:scale(1.03);box-shadow:0 0 25px rgba(24,214,140,.65)}
+    .sync-calibration-panel small{display:block;color:#9ba7b1;font-size:11px;line-height:1.5}
+
+    .host-rules-view{width:min(980px,94%);height:100%;margin:auto;padding:30px 38px;box-sizing:border-box;text-align:left;overflow:hidden;display:flex;flex-direction:column}
+    .rules-page-head{display:flex;justify-content:space-between;gap:28px;align-items:flex-start;border-bottom:2px solid rgba(102,252,241,.5);padding-bottom:18px;margin-bottom:18px}.rules-page-head h2{font-size:34px;color:#fff;margin:0;text-shadow:0 0 12px rgba(102,252,241,.2)}
+    .host-rules-content{flex:1;overflow:auto;padding:2px 18px 10px 4px;font-size:20px;line-height:1.72;scrollbar-width:thin;scrollbar-color:#66fcf1 #101319}.host-rules-content h1{font-size:36px;color:#66fcf1;margin:4px 0 22px}.host-rules-content h2{font-size:28px;color:#ffd84d;margin:25px 0 12px}.host-rules-content h3{font-size:22px;color:#fff;margin:20px 0 10px}.host-rules-content p{margin:9px 0}.host-rules-content ul,.host-rules-content ol{padding-left:34px;margin:12px 0}.host-rules-content li{margin:8px 0}.host-rules-content strong{color:#fff}.host-rules-content blockquote{border-left:5px solid #ffd84d;background:rgba(255,216,77,.08);padding:13px 18px;margin:18px 0;color:#fff2b2}.host-rules-content code{font-family:Consolas,monospace;background:#15252c;border:1px solid #33515b;border-radius:5px;padding:2px 7px;color:#aef7f3}.host-rules-content pre{background:#050708;border:1px solid #38515a;padding:14px;border-radius:7px;overflow:auto}.host-rules-content hr{border:0;border-top:2px dashed #35515b;margin:24px 0}.host-rules-content .md-spacer{height:4px}
+    .rules-page-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;margin-top:6px;color:#888;font-size:13px}.rules-dots{display:flex;gap:7px}.rules-dot{width:9px;height:9px;border:1px solid #66fcf1;border-radius:50%}.rules-dot.active{background:#66fcf1;box-shadow:0 0 9px rgba(102,252,241,.8)}
+
+    .host-end-view{width:100%;height:100%;margin:0;padding:clamp(8px,1.2vw,18px);box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;min-height:0}
+    .host-end-canvas-frame{position:relative;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;background-color:#071014;background-image:linear-gradient(rgba(102,252,241,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(102,252,241,.035) 1px,transparent 1px);background-size:25px 25px;border:1px solid rgba(102,252,241,.28);box-shadow:0 0 24px rgba(0,0,0,.35)}
+    /* V7.13: this is the SAME 1600x900 authoring canvas used by manage.html.
+       It is scaled uniformly and centered; never stretched to the host stage ratio. */
+    .host-end-stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;overflow:hidden;transform-origin:center center;will-change:transform}
+    .host-end-element{position:absolute;box-sizing:border-box;overflow:hidden}
+    .host-end-element-text{padding:10px 12px;line-height:1.35}
+    .host-end-element-text h1,.host-end-element-text h2,.host-end-element-text h3,.host-end-element-text p,.host-end-element-text ul,.host-end-element-text ol,.host-end-element-text blockquote{margin-top:.18em;margin-bottom:.28em}
+    .host-end-element-text h1{font-size:1.5em;color:inherit}.host-end-element-text h2{font-size:1.25em;color:inherit}.host-end-element-text h3{font-size:1.08em;color:inherit}.host-end-element-text ul,.host-end-element-text ol{padding-left:1.35em}.host-end-element-text blockquote{border-left:.12em solid currentColor;padding-left:.6em;opacity:.9}
+    .host-end-element-image{display:flex;align-items:center;justify-content:center}.host-end-element-image img{width:100%;height:100%;display:block}
+
+    /* V7.13: keep the original pixel header + cyan stage frame. The activity-end
+       design itself preserves the editor's 16:9 geometry; any extra host-stage area
+       continues the same page background/grid instead of becoming a black block. */
+    .host-layout.host-layout-presentation .host-rules-view{width:min(1420px,96%);height:100%;padding:28px clamp(24px,3vw,52px)}
+    .host-layout.host-layout-presentation .host-end-view{width:100%;height:100%;padding:clamp(8px,1.2vw,18px);margin:0;display:flex;align-items:center;justify-content:center}
+    .host-layout.host-layout-presentation #host-settlement-view,
+    .host-layout.host-layout-presentation #host-celebration-view{width:100%!important;max-width:none!important;margin:auto!important;padding:clamp(18px,3vh,38px) clamp(18px,4vw,72px)!important;box-sizing:border-box}
+  </style>
+
+</head>
+<body>
+  <!-- Scanlines background for retro projection look -->
+  <div class="scanlines"></div>
+
+  <div id="host-layout" class="host-layout">
+    
+    <!-- Left Main Panel -->
+    <div class="host-main">
+      
+      <!-- Top Status Header -->
+      <div class="pixel-box host-header">
+        <h1 class="retro-text">POKÉMON RHYTHM COMP.</h1>
+        <div id="lobby-info" class="retro-text" style="font-size: 16px;">
+          ROOM: <span class="text-cyan" id="host-room-id">8888</span>
+        </div>
+      </div>
+
+      <!-- Main Interactive Screen Area -->
+      <div id="host-stage-shell" class="pixel-box pixel-box-primary host-stage-shell" style="flex-grow: 1; display: flex; flex-direction: column; position: relative;">
+        
+        <!-- A. Lobby View -->
+        <div id="host-lobby-view" class="text-center m-auto" style="display: block;">
+          <h2 class="retro-text text-cyan" style="font-size: 32px; margin-bottom: 30px;">第五屆猜歌大賽</h2>
+          <p style="font-size: 22px; margin-bottom: 18px; font-weight: bold;">等待玩家加入</p>
+          <p style="font-size: 18px;">房號：<span class="text-gold" id="host-lobby-room-code" style="font-size:26px;font-family:'Press Start 2P';">8888</span></p>
+          <p style="font-size:14px;color:#888;margin-top:18px;line-height:1.7;">入場 QR Code 由主持後台需要時才顯示；加入完成後即可關閉，回到遊戲畫面。</p>
+          <p class="retro-text text-gold" style="margin-top: 40px; font-size: 14px; animation: pulse-arrow 1s infinite alternate;">等待主持人開始第一題...</p>
+        </div>
+
+        <!-- Rules View -->
+        <div id="host-rules-view" class="host-rules-view" style="display:none;">
+          <div class="rules-page-head">
+            <div><p class="retro-text text-gold" style="font-size:12px;margin-bottom:10px;">HOW TO PLAY</p><h2 id="host-rules-title">遊戲規則</h2></div>
+            <span id="host-rules-page-indicator" class="retro-text text-cyan">1 / 1</span>
+          </div>
+          <div id="host-rules-content" class="host-rules-content"></div>
+          <div class="rules-page-footer"><span>由主持人控制翻頁</span><div id="host-rules-dots" class="rules-dots"></div></div>
+        </div>
+
+
+        <!-- Activity End Pages -->
+        <div id="host-end-view" class="host-end-view" style="display:none;">
+          <div id="host-end-canvas-frame" class="host-end-canvas-frame">
+            <div id="host-end-stage" class="host-end-stage"></div>
+          </div>
+        </div>
+
+        <!-- B. Question Intro View -->
+        <div id="host-intro-view" class="text-center m-auto" style="display: none;">
+          <h2 class="retro-text text-cyan" id="intro-question-num" style="font-size: 34px; margin-bottom: 28px;">第 1 題</h2>
+          <p style="font-size: 23px; margin-top: 30px; animation: pulse-arrow 1.2s infinite alternate;">即將進入節奏挑戰，請準備好您的手機！</p>
+        </div>
+
+        <!-- C. Rhythm DDR Playing View -->
+        <div id="host-rhythm-view" style="display: none; height: 100%; width: 100%; flex-direction: column; position: relative;">
+          <!-- 4 tracks -->
+          <div class="ddr-tracks-container" id="tracks-frame">
+            <!-- Left track (Green) -->
+            <div class="track track-left" id="track-left">
+              <div class="judgment-target target-left"></div>
+            </div>
+            <!-- Down track (Blue) -->
+            <div class="track track-down" id="track-down">
+              <div class="judgment-target target-down"></div>
+            </div>
+            <!-- Up track (Yellow) -->
+            <div class="track track-up" id="track-up">
+              <div class="judgment-target target-up"></div>
+            </div>
+            <!-- Right track (Red) -->
+            <div class="track track-right" id="track-right">
+              <div class="judgment-target target-right"></div>
+            </div>
+            
+            <!-- Shared judgment line -->
+            <div class="judgment-line"></div>
+          </div>
+          
+          <!-- Bottom live notes timeline (overlay countdown) -->
+          <div id="rhythm-countdown" class="retro-text text-gold text-center" style="position: absolute; top: 40%; left: 0; width: 100%; font-size: 40px; z-index: 50; text-shadow: 3px 3px 0 #000;">
+            READY
+          </div>
+
+          <aside id="rhythm-team-scoreboard" class="rhythm-team-scoreboard">
+            <h3 class="retro-text text-cyan">本題即時戰況</h3>
+            <div id="rhythm-team-score-list" class="rhythm-team-score-list"></div>
+          </aside>
+        </div>
+
+        <!-- D. Guessing View -->
+        <div id="host-guessing-view" class="text-center m-auto" style="display: none;">
+          <h2 class="retro-text text-cyan" style="font-size: 36px; margin-bottom: 20px; animation: pulse-arrow 1.5s infinite alternate;">猜歌階段</h2>
+          <p style="font-size: 22px; margin-bottom: 30px;">聽出來本題旋律是寶可夢的哪一首曲子了嗎？</p>
+          <div class="pixel-box" style="background: rgba(255,255,255,0.05); padding: 20px; max-width: 500px; margin: 0 auto;">
+            <p style="font-size: 18px; line-height: 1.6;">請小組代表向現場主持人進行搶答！</p>
+          </div>
+        </div>
+
+        <!-- E. Optional Multiple Choice View -->
+        <div id="host-choice-view" class="text-center m-auto" style="display:none;width:100%;max-width:900px;">
+          <h2 class="retro-text text-cyan" style="font-size:30px;margin-bottom:16px;">備援選擇題</h2>
+          <div id="host-choice-options" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"></div>
+        </div>
+
+        <!-- F. Full Song / Harmonica Performance View -->
+        <div id="host-performance-view" class="text-center m-auto" style="display:none;width:100%;max-width:1050px;">
+          <p class="retro-text text-gold" style="font-size:15px;margin-bottom:10px;">完整題目／口琴演奏</p>
+          <h1 id="performance-song-name" class="retro-text text-cyan" style="font-size:28px;margin-bottom:18px;">歌曲名稱</h1>
+          <div id="performance-media" style="width:min(900px,100%);height:auto;margin:0 auto;background:#050608;border:3px solid var(--primary-color);display:grid;place-items:center;overflow:hidden;"></div>
+        </div>
+
+        <!-- G. Answer Reveal & Catch View -->
+        <div id="host-reveal-view" class="text-center m-auto" style="display: none; width: 100%;">
+          <h2 class="retro-text text-gold" style="font-size: 24px; margin-bottom: 10px;">答案揭曉</h2>
+          <h1 class="retro-text text-cyan" id="reveal-song-name" style="font-size: 28px; margin-bottom: 30px; text-shadow: 0 0 10px rgba(102,252,241,0.5);">寶可夢主題曲</h1>
+          
+          <div class="d-flex justify-between align-center m-auto" style="max-width: 700px; gap: 40px;">
+            <!-- Caught Pokemon Card -->
+            <div class="pixel-box" style="flex: 1; background: #000; padding: 20px;">
+              <h4 class="retro-text text-gold" style="font-size: 14px; margin-bottom: 10px;">本題被捕獲寶可夢</h4>
+              <div class="reveal-pokemon-splash">
+                <div id="reveal-pkmn-img" class="pkmn-pixel-img" style="background: #1a1c23; display: flex; align-items: center; justify-content: center; border: 4px solid var(--primary-color); border-radius: 8px;">
+                  <svg id="reveal-svg" viewBox="0 0 100 100" style="width: 100px; height: 100px; fill: var(--primary-color);"></svg>
+                </div>
+                <h3 class="retro-text" id="reveal-pkmn-name" style="font-size: 18px; margin-top: 10px;">小火龍</h3>
+              </div>
+            </div>
+
+            <!-- Round rhythm performance winner -->
+            <div class="pixel-box" style="flex: 1; background: #000; padding: 20px; align-self: stretch; display: flex; flex-direction: column; justify-content: center;">
+              <h4 class="retro-text text-gold" style="font-size: 14px; margin-bottom: 15px;">節奏挑戰冠軍 (捕獲者)</h4>
+              <div id="reveal-winner-team" class="retro-text text-cyan" style="font-size: 22px; margin-bottom: 10px;">皮卡丘隊</div>
+              <p style="font-size: 14px;" id="reveal-winner-score">本題綜合判定分數：0 分</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- F. Settlement Reveal View -->
+        <div id="host-settlement-view" class="text-center m-auto" style="display: none; width: 100%;">
+          <h2 class="retro-text text-gold" style="font-size: 32px; margin-bottom: 20px; text-shadow: 0 0 12px rgba(255,215,0,0.5);">最終結算大典</h2>
+          <p style="font-size: 18px; margin-bottom: 30px;" id="settlement-status-text">最終成績已準備完成，等待主持人開始公布。</p>
+          
+          <div class="pixel-box m-auto" id="settlement-reveal-card" style="max-width: 600px; background: #000; padding: 30px; display: none;">
+            <h3 class="retro-text text-cyan" id="settle-team-name" style="font-size: 24px; margin-bottom: 20px;">皮卡丘隊</h3>
+            
+            <div class="text-left" style="margin-bottom: 20px;">
+              <p style="font-size: 16px; margin-bottom: 10px; font-weight: bold;">捕獲寶可夢積分：</p>
+              <div class="caught-pokemon-grid" id="settle-pkmn-grid" style="grid-template-columns: repeat(4, 1fr); justify-items: center;">
+                <!-- Pokemons revealed here -->
+              </div>
+            </div>
+
+            <div class="d-flex justify-between" style="border-top: 4px double var(--primary-color); padding-top: 15px; font-size: 22px;">
+              <span>總積分：</span>
+              <strong class="retro-text text-gold" style="text-shadow: 0 0 8px rgba(255,215,0,0.4);" id="settle-total-pts">0 點</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- G. Final Winner Celebrations View -->
+        <div id="host-celebration-view" class="text-center m-auto" style="display: none; width: 100%;">
+          <div class="retro-text text-gold" style="font-size: 32px; margin-bottom: 10px; text-shadow: 0 0 15px #FFD700; animation: pulse-arrow 0.6s infinite alternate;">
+            ★ 恭喜成為寶可夢大師 ★
+          </div>
+          <h1 class="retro-text text-cyan" id="final-champion-team" style="font-size: 40px; margin: 25px 0; text-shadow: 0 0 20px rgba(102,252,241,0.8);">皮卡丘隊</h1>
+          <p style="font-size: 20px; font-weight: bold; margin-bottom: 30px;" id="final-champion-score">以總積分 150 點奪得第一名！</p>
+          
+          <div class="pixel-box m-auto" style="max-width: 500px; background: rgba(0,0,0,0.8);">
+            <h4 class="retro-text text-gold" style="font-size: 12px; margin-bottom: 10px;">總榜排名</h4>
+            <div id="final-leaderboard-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- leaderboard list -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Host-controlled Pokédex showcase overlay -->
+        <div id="host-collection-overlay" class="host-collection-overlay" style="display:none;">
+          <div class="host-collection-card pixel-box pixel-box-primary">
+            <div class="d-flex justify-between align-center" style="margin-bottom:14px;gap:16px;">
+              <div>
+                <p class="retro-text text-gold" style="font-size:12px;margin-bottom:6px;">POKÉDEX CHECKPOINT</p>
+                <h2 id="collection-showcase-title" class="retro-text text-cyan" style="font-size:22px;">目前小組圖鑑</h2>
+              </div>
+            </div>
+            <div id="collection-showcase-content" class="collection-showcase-content"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Sidebar Panel -->
+    <div id="host-sidebar" class="host-sidebar">
+      
+      <!-- Leaderboard -->
+      <div class="pixel-box" style="flex: 1; display: flex; flex-direction: column;">
+        <h3 class="retro-text text-cyan text-center" style="font-size: 14px; margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">本題即時榜</h3>
+        <div class="team-list-rank" id="hud-leaderboard">
+          <!-- Populated by JavaScript -->
+          <p class="text-center" style="color: #666; margin-top: 30px;">等待玩家登入...</p>
+        </div>
+      </div>
+
+
+    </div>
+
+  </div>
+
+  <!-- Host-controlled player entry QR overlay -->
+  <div id="host-entry-qr-overlay" class="entry-qr-overlay" style="display:none;">
+    <div class="entry-qr-card text-center">
+      <p class="retro-text text-cyan" style="font-size:14px;margin-bottom:14px;">JOIN THE GAME</p>
+      <h2 style="font-size:32px;margin-bottom:18px;color:#fff;">掃描 QR Code 加入遊戲</h2>
+      <div class="entry-qr-image-wrap">
+        <img id="host-entry-qr-img" alt="玩家入場 QR Code">
+      </div>
+      <p style="font-size:16px;margin-top:18px;">房號：<strong id="host-entry-room" class="text-gold">8888</strong></p>
+      <p id="host-entry-url-text" style="font-size:12px;color:#9aa;max-width:760px;word-break:break-all;margin:12px auto 0;"></p>
+    </div>
+  </div>
+
+
+  <!-- Local projection-device audio/video sync calibration. Saved only on this host computer. -->
+  <button id="sync-calibration-button" type="button" class="sync-calibration-button">⚙ 音畫同步校正</button>
+  <div id="sync-calibration-panel" class="sync-calibration-panel" style="display:none;">
+    <div class="sync-calibration-head">
+      <strong>音畫同步校正</strong>
+      <button id="sync-close-button" type="button">×</button>
+    </div>
+    <p>這是投影電腦專用設定，只影響題目音軌播放時間，不改 MIDI 與玩家計分。</p>
+    <div class="sync-calibration-grid">
+      <span>系統偵測輸出延遲</span><strong id="sync-auto-latency">0 ms</strong>
+      <span>手動補償</span><label><input id="sync-manual-offset" type="number" min="-500" max="500" step="10" value="0"> ms</label>
+      <span>總補償</span><strong id="sync-total-comp">0 ms</strong>
+    </div>
+    <div class="sync-calibration-buttons">
+      <button type="button" data-sync-adjust="-50">-50</button>
+      <button type="button" data-sync-adjust="-10">-10</button>
+      <button id="sync-reset-button" type="button">歸零</button>
+      <button type="button" data-sync-adjust="10">+10</button>
+      <button type="button" data-sync-adjust="50">+50</button>
+    </div>
+    <button id="sync-test-button" type="button" class="sync-test-button">播放同步測試</button>
+    <div id="sync-test-pulse" class="sync-test-pulse">●</div>
+    <small>若「聲音比閃光晚」，增加正值；若聲音比較早，調成負值。建議每次換 HDMI／投影機／音響後重新測試。</small>
+  </div>
+
+  <!-- Canvas for celebration confetti -->
+  <canvas id="confetti" class="confetti-canvas"></canvas>
+
+  <!-- Socket.IO library and host screen logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/markdown-lite.js?v=713"></script>
+  <script src="/js/audio-engine.js?v=730"></script>
+  <script src="/js/host.js?v=713"></script>
+</body>
+</html>

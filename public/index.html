@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>第五屆猜歌大賽 - 玩家手機端</title>
+  <link rel="stylesheet" href="/css/style.css?v=760">
+</head>
+<body>
+  <!-- Scanlines background for retro gaming atmosphere -->
+  <div class="scanlines"></div>
+
+  <div class="mobile-container">
+    
+    <!-- 1. Join / Lobby View -->
+    <div id="join-view" class="pixel-box pixel-box-primary m-auto w-100" style="max-width: 400px;">
+      <h2 class="retro-text text-center text-cyan" style="margin-bottom: 20px; font-size: 18px;">寶可夢猜歌節奏賽</h2>
+      
+      <div class="gap-10 d-flex flex-column" style="margin-bottom: 15px;">
+        <label class="retro-text" style="font-size: 10px;">房間代碼</label>
+        <input type="text" id="input-room" class="pixel-box" style="padding: 10px; margin: 0; background: #000; color: #fff; font-size: 16px;" value="8888" placeholder="請輸入房號">
+      </div>
+
+      <div class="gap-10 d-flex flex-column" style="margin-bottom: 15px;">
+        <label class="retro-text" style="font-size: 10px;">玩家暱稱</label>
+        <input type="text" id="input-nickname" class="pixel-box" style="padding: 10px; margin: 0; background: #000; color: #fff; font-size: 16px;" placeholder="請輸入你的暱稱">
+      </div>
+
+      <div class="gap-10 d-flex flex-column" style="margin-bottom: 20px;">
+        <label class="retro-text" style="font-size: 10px;">選擇隊伍</label>
+        <select id="select-team" class="pixel-box" style="padding: 10px; margin: 0; background: #000; color: #fff; font-size: 16px; width: 100%;">
+          <option value="team-1">小火龍隊 (Team A)</option>
+          <option value="team-2">傑尼龜隊 (Team B)</option>
+          <option value="team-3">妙蛙種子隊 (Team C)</option>
+          <option value="team-4">皮卡丘隊 (Team D)</option>
+        </select>
+      </div>
+
+      <button id="btn-join" class="pixel-btn w-100">登入遊戲</button>
+      <button id="btn-open-calib" class="pixel-btn w-100" style="margin-top: 10px; background: #888;">節拍反應測試</button>
+    </div>
+
+    <!-- 2. Player Lobby Waiting View -->
+    <div id="lobby-view" class="pixel-box w-100 m-auto text-center" style="display: none;">
+      <h3 class="retro-text text-cyan" style="font-size: 16px; margin-bottom: 20px;">已成功加入房間！</h3>
+      <p id="player-welcome-msg" style="margin-bottom: 20px; font-weight: bold;"></p>
+      
+      <div class="pixel-box" style="background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; margin-bottom: 10px;">目前遊戲判定補償：</p>
+        <p class="retro-text text-gold" id="lobby-calib-value" style="font-size: 18px;">0 ms</p>
+      </div>
+
+      <p style="animation: pulse-arrow 1s infinite alternate; font-size: 13px;">等待主持人開始遊戲...</p>
+      
+      <button id="btn-calib-lobby" class="pixel-btn w-100" style="margin-top: 25px; background: #888;">重新進行節拍反應測試</button>
+    </div>
+
+    <!-- 3. Active Play / Rhythm Game View -->
+    <div id="game-view" class="w-100" style="display: none; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+      <!-- Header -->
+      <div class="player-header">
+        <div class="info-group">
+          <span class="name" id="hud-nickname">小智</span>
+          <span class="team" id="hud-team">皮卡丘隊</span>
+        </div>
+        <div class="player-score">
+          本題：<span id="hud-score" class="retro-text">0</span>
+        </div>
+      </div>
+
+      <!-- State & Instructions -->
+      <div class="text-center" style="margin-bottom: 10px;">
+        <h4 id="hud-question-title" class="retro-text text-cyan" style="font-size: 14px;">第 1 題</h4>
+        <p id="game-status-label" style="font-size: 13px; color: #aaa;">等待挑戰開始...</p>
+      </div>
+
+      <!-- Live feedback splash -->
+      <div class="judgment-splash">
+        <div id="judgment-text" class="judgment-text"></div>
+        <div id="combo-text" class="player-combo" style="display: none;">0 COMBO</div>
+      </div>
+
+      <!-- Dpad buttons -->
+      <div class="mobile-dpad">
+        <button class="dpad-btn dpad-up" data-dir="up"></button>
+        <button class="dpad-btn dpad-left" data-dir="left"></button>
+        <button class="dpad-btn dpad-right" data-dir="right"></button>
+        <button class="dpad-btn dpad-down" data-dir="down"></button>
+      </div>
+    </div>
+
+    <!-- 4. Guessing / Answer Reveal Waiting View -->
+    <div id="waiting-view" class="pixel-box w-100 m-auto text-center" style="display: none;">
+      <h3 class="retro-text text-cyan" style="font-size: 16px; margin-bottom: 15px;" id="waiting-title">猜歌搶答中</h3>
+      <p id="waiting-desc" style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+        節奏挑戰已結束！<br>
+        請看大螢幕，並向現場主持人搶答本題歌名！
+      </p>
+      <div id="waiting-score-box" class="pixel-box" style="background: rgba(255,255,255,0.05); padding: 15px;">
+        <p style="font-size: 12px; margin-bottom: 5px;">本回合您的得分</p>
+        <p class="retro-text text-gold" id="round-score-val" style="font-size: 20px;">0</p>
+      </div>
+    </div>
+
+    <!-- 5. Settlement / Congratulations View -->
+    <div id="settlement-view" class="pixel-box w-100 m-auto text-center" style="display: none;">
+      <h3 class="retro-text text-gold" style="font-size: 18px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">最終結算</h3>
+      <p style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+        所有關卡已完成！<br>
+        請看大螢幕的最終排名與捕捉成果揭曉！
+      </p>
+      <div class="retro-text text-cyan" style="font-size: 10px; animation: pulse-arrow 1.2s infinite alternate;">
+        成為寶可夢大師吧！
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Player team Pokédex explorer (available between rhythm rounds) -->
+  <button id="btn-open-team-dex" class="pixel-btn player-dex-fab" style="display:none;">我的隊伍圖鑑</button>
+  <div id="team-dex-overlay" class="team-dex-overlay" style="display:none;">
+    <div class="pixel-box pixel-box-primary team-dex-dialog">
+      <div class="d-flex justify-between align-center" style="gap:12px;margin-bottom:14px;">
+        <div>
+          <p class="retro-text text-gold" style="font-size:9px;margin-bottom:6px;">MY TEAM POKÉDEX</p>
+          <h2 id="team-dex-title" class="retro-text text-cyan" style="font-size:16px;">我的隊伍圖鑑</h2>
+        </div>
+        <button id="btn-close-team-dex" class="pixel-btn" style="padding:8px 10px;background:#666;">關閉</button>
+      </div>
+      <p id="team-dex-summary" style="font-size:12px;color:#aaa;margin-bottom:12px;"></p>
+      <div id="team-dex-grid" class="team-dex-grid"></div>
+    </div>
+  </div>
+
+  <!-- Calibration Overlay -->
+  <div id="calib-overlay" class="calibration-overlay" style="display: none;">
+    <div class="text-center">
+      <h2 class="retro-text text-cyan" style="font-size: 16px; margin-bottom: 10px;">節拍反應測試</h2>
+      <p style="font-size: 12px; line-height: 1.5; padding: 0 15px;">當綠色圓圈亮起或聽到節拍聲時按 TAP，共測 5 次。這只顯示您的反應時間，不會拿來移動正式遊戲的判定時間。</p>
+    </div>
+
+    <div class="calib-visual" id="calib-visual-node">TAP</div>
+
+    <div class="w-100 text-center">
+      <p style="font-size: 12px; margin-bottom: 10px;" id="calib-status">進度：0 / 5</p>
+      <button id="btn-calib-tap" class="pixel-btn w-100" style="background: var(--color-left); color: white;">TAP</button>
+      <button id="btn-calib-close" class="pixel-btn w-100" style="margin-top: 10px; background: var(--color-right); color: white;">完成並返回</button>
+    </div>
+  </div>
+
+  <!-- Socket.IO library and player logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/player.js?v=760"></script>
+</body>
+</html>
